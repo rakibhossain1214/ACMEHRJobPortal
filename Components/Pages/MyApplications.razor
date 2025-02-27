@@ -3,6 +3,7 @@
 @inject JobApplicationService JobApplicationService
 @inject AuthService AuthService
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 
 <PageTitle>My Job Applications</PageTitle>
 
@@ -49,6 +50,7 @@ else if (applications.Any())
                     </td>
                     <td>
                         <button class="btn btn-info" @onclick="() => ViewJobDetails(application.JobId)">View Job</button>
+                        <button class="btn btn-danger" @onclick="() => WithdrawApplication(application.ApplicationId)">Withdraw</button>
                     </td>
                 </tr>
             }
@@ -74,6 +76,29 @@ else
             applications = await JobApplicationService.GetApplicationsByUserIdAsync(currentUserId);
         }
         isLoading = false;
+    }
+
+    private async Task WithdrawApplication(int applicationId)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to withdraw this application?");
+        
+        if (confirmed)
+        {
+            bool success = await JobApplicationService.WithdrawApplicationAsync(applicationId);
+            
+            if (success)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Application withdrawn successfully!");
+                
+                // Refresh the applications list
+                int currentUserId = AuthService.GetCurrentUserId();
+                applications = await JobApplicationService.GetApplicationsByUserIdAsync(currentUserId);
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Failed to withdraw application. Please try again.");
+            }
+        }
     }
 
     private void ViewJobDetails(int jobId)

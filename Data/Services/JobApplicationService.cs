@@ -50,6 +50,20 @@ namespace HRJobPortal.Data.Services
             return application;
         }
 
+        public async Task<bool> WithdrawApplicationAsync(int applicationId)
+        {
+            var application = await _context.JobApplications.FindAsync(applicationId);
+            
+            if (application == null)
+            {
+                return false;
+            }
+            
+            _context.JobApplications.Remove(application);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<List<JobApplication>> GetApplicationsByJobIdAsync(int jobId)
         {
             return await _context.JobApplications
