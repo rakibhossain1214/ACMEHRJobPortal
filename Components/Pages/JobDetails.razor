@@ -1,0 +1,90 @@
+@page "/jobs/{jobId:int}"
+@rendermode InteractiveServer
+@inject JobService JobService
+@inject JobApplicationService JobApplicationService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Job Details</PageTitle>
+
+@if (isLoading)
+{
+    <p><em>Loading...</em></p>
+}
+else if (job != null)
+{
+    <div class="card mb-4">
+        <div class="card-header">
+            <h1>@job.JobTitle</h1>
+            @if (job.IsActive)
+            {
+                <span class="badge bg-success">Active</span>
+            }
+            else
+            {
+                <span class="badge bg-danger">Expired</span>
+            }
+        </div>
+        <div class="card-body">
+            <h5>Description</h5>
+            <p>@job.Description</p>
+            
+            <h5>Requirements</h5>
+            <p>@job.Requirements</p>
+            
+            <p><strong>Application Deadline:</strong> @job.Deadline.ToString("yyyy-MM-dd")</p>
+            
+            @if (job.IsActive)
+            {
+                <button class="btn btn-primary" @onclick="ApplyForJob">Apply Now</button>
+            }
+            <button class="btn btn-secondary" @onclick="BackToJobs">Back to Jobs</button>
+        </div>
+    </div>
+}
+else
+{
+    <p>Job not found.</p>
+    <button class="btn btn-secondary" @onclick="BackToJobs">Back to Jobs</button>
+}
+
+@code {
+    [Parameter]
+    public int JobId { get; set; }
+
+    private Job job;
+    private bool isLoading = true;
+    private int currentUserId = 1; // This would normally come from authentication
+
+    protected override async Task OnInitializedAsync()
+    {
+        job = await JobService.GetJobByIdAsync(JobId);
+        isLoading = false;
+    }
+
+    private async Task ApplyForJob()
+    {
+        // Check if user has already applied
+        bool alreadyApplied = await JobApplicationService.HasUserAppliedToJobAsync(currentUserId, JobId);
+        
+        if (alreadyApplied)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "You have already applied for this job.");
+            return;
+        }
+
+        // Confirm application
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to apply for this job?");
+        if (confirmed)
+        {
+            await JobApplicationService.ApplyToJobAsync(currentUserId, JobId);
+            await JSRuntime.InvokeVoidAsync("alert", "Application submitted successfully!");
+            NavigationManager.NavigateTo("/my-applications");
+        }
+    }
+
+    private void BackToJobs()
+    {
+        NavigationManager.NavigateTo("/jobs");
+    }
+} 

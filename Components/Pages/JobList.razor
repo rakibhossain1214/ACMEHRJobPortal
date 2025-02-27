@@ -1,0 +1,84 @@
+@page "/jobs"
+@rendermode InteractiveServer
+@inject JobService JobService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Job Listings</PageTitle>
+
+<h1>Job Listings</h1>
+
+@if (isLoading)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="mb-3">
+        <button class="btn btn-primary" @onclick="ShowActiveJobs">Active Jobs</button>
+        <button class="btn btn-secondary" @onclick="ShowAllJobs">All Jobs</button>
+    </div>
+
+    @if (jobs.Any())
+    {
+        <div class="row">
+            @foreach (var job in jobs)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">@job.JobTitle</h5>
+                            <p class="card-text">@(job.Description?.Length > 100 ? job.Description.Substring(0, 100) + "..." : job.Description)</p>
+                            <p class="card-text"><small class="text-muted">Deadline: @job.Deadline.ToString("yyyy-MM-dd")</small></p>
+                            <button class="btn btn-info" @onclick="() => ViewJobDetails(job.JobId)">View Details</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <p>No jobs found.</p>
+    }
+}
+
+@code {
+    private List<Job> jobs = new List<Job>();
+    private bool isLoading = true;
+    private bool showActiveOnly = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadJobs();
+    }
+
+    private async Task LoadJobs()
+    {
+        if (showActiveOnly)
+        {
+            jobs = await JobService.GetActiveJobsAsync();
+        }
+        else
+        {
+            jobs = await JobService.GetAllJobsAsync();
+        }
+        isLoading = false;
+    }
+
+    private async Task ShowActiveJobs()
+    {
+        showActiveOnly = true;
+        await LoadJobs();
+    }
+
+    private async Task ShowAllJobs()
+    {
+        showActiveOnly = false;
+        await LoadJobs();
+    }
+
+    private void ViewJobDetails(int jobId)
+    {
+        NavigationManager.NavigateTo($"/jobs/{jobId}");
+    }
+} 

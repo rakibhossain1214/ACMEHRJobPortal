@@ -1,0 +1,88 @@
+@page "/education/edit/{userId:int}/{educationId:int}"
+@rendermode InteractiveServer
+@inject EducationService EducationService
+@inject NavigationManager NavigationManager
+
+<PageTitle>@(isNewEducation ? "Add Education" : "Edit Education")</PageTitle>
+
+<h1>@(isNewEducation ? "Add Education" : "Edit Education")</h1>
+
+@if (isLoading)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <EditForm Model="@education" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="degree" class="form-label">Degree</label>
+            <InputText id="degree" @bind-Value="education.Degree" class="form-control" />
+            <ValidationMessage For="@(() => education.Degree)" />
+        </div>
+
+        <div class="mb-3">
+            <label for="university" class="form-label">University</label>
+            <InputText id="university" @bind-Value="education.University" class="form-control" />
+            <ValidationMessage For="@(() => education.University)" />
+        </div>
+
+        <div class="mb-3">
+            <label for="cgpa" class="form-label">CGPA</label>
+            <InputNumber id="cgpa" @bind-Value="education.CGPA" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label for="yearOfCompletion" class="form-label">Year of Completion</label>
+            <InputNumber id="yearOfCompletion" @bind-Value="education.YearOfCompletion" class="form-control" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int UserId { get; set; }
+
+    [Parameter]
+    public int EducationId { get; set; }
+
+    private Education education = new Education();
+    private bool isLoading = true;
+    private bool isNewEducation => EducationId == 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (EducationId > 0)
+        {
+            education = await EducationService.GetEducationByIdAsync(EducationId) ?? new Education();
+        }
+        else
+        {
+            education = new Education { UserId = UserId };
+        }
+        isLoading = false;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (isNewEducation)
+        {
+            await EducationService.AddEducationAsync(education);
+        }
+        else
+        {
+            await EducationService.UpdateEducationAsync(education);
+        }
+        NavigationManager.NavigateTo($"/education/{UserId}");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo($"/education/{UserId}");
+    }
+} 

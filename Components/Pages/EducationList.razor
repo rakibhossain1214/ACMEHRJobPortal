@@ -1,0 +1,92 @@
+@page "/education/{userId:int}"
+@rendermode InteractiveServer
+@inject EducationService EducationService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Education History</PageTitle>
+
+<h1>Education History</h1>
+
+@if (isLoading)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    @if (educations.Any())
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Degree</th>
+                    <th>University</th>
+                    <th>CGPA</th>
+                    <th>Year of Completion</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var education in educations)
+                {
+                    <tr>
+                        <td>@education.Degree</td>
+                        <td>@education.University</td>
+                        <td>@education.CGPA</td>
+                        <td>@education.YearOfCompletion</td>
+                        <td>
+                            <button class="btn btn-primary" @onclick="() => EditEducation(education.EducationId)">Edit</button>
+                            <button class="btn btn-danger" @onclick="() => DeleteEducation(education.EducationId)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>No education records found.</p>
+    }
+
+    <button class="btn btn-success" @onclick="AddNewEducation">Add New Education</button>
+    <button class="btn btn-secondary" @onclick="BackToProfile">Back to Profile</button>
+}
+
+@code {
+    [Parameter]
+    public int UserId { get; set; }
+
+    private List<Education> educations = new List<Education>();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEducations();
+    }
+
+    private async Task LoadEducations()
+    {
+        educations = await EducationService.GetEducationsByUserIdAsync(UserId);
+        isLoading = false;
+    }
+
+    private void AddNewEducation()
+    {
+        NavigationManager.NavigateTo($"/education/edit/{UserId}/0");
+    }
+
+    private void EditEducation(int educationId)
+    {
+        NavigationManager.NavigateTo($"/education/edit/{UserId}/{educationId}");
+    }
+
+    private async Task DeleteEducation(int educationId)
+    {
+        await EducationService.DeleteEducationAsync(educationId);
+        await LoadEducations();
+    }
+
+    private void BackToProfile()
+    {
+        NavigationManager.NavigateTo($"/profile/{UserId}");
+    }
+} 

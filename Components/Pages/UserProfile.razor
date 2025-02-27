@@ -1,0 +1,85 @@
+@page "/profile"
+@page "/profile/{id:int}"
+@rendermode InteractiveServer
+@inject UserService UserService
+@inject NavigationManager NavigationManager
+
+<PageTitle>User Profile</PageTitle>
+
+<h1>User Profile</h1>
+
+@if (isLoading)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <EditForm Model="@user" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <InputText id="name" @bind-Value="user.Name" class="form-control" />
+            <ValidationMessage For="@(() => user.Name)" />
+        </div>
+
+        <div class="mb-3">
+            <label for="contactInfo" class="form-label">Contact Info</label>
+            <InputText id="contactInfo" @bind-Value="user.ContactInfo" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label for="address" class="form-label">Address</label>
+            <InputText id="address" @bind-Value="user.Address" class="form-control" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save</button>
+        @if (userId > 0)
+        {
+            <button type="button" class="btn btn-danger" @onclick="DeleteUser">Delete</button>
+        }
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    private User user = new User();
+    private bool isLoading = true;
+    private int userId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id.HasValue && Id.Value > 0)
+        {
+            userId = Id.Value;
+            user = await UserService.GetUserByIdAsync(userId) ?? new User();
+        }
+        isLoading = false;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (userId > 0)
+        {
+            await UserService.UpdateUserAsync(user);
+        }
+        else
+        {
+            var newUser = await UserService.CreateUserAsync(user);
+            userId = newUser.UserId;
+        }
+        NavigationManager.NavigateTo($"/profile/{userId}");
+    }
+
+    private async Task DeleteUser()
+    {
+        if (userId > 0)
+        {
+            await UserService.DeleteUserAsync(userId);
+            NavigationManager.NavigateTo("/");
+        }
+    }
+} 

@@ -1,0 +1,76 @@
+@page "/my-applications"
+@rendermode InteractiveServer
+@inject JobApplicationService JobApplicationService
+@inject NavigationManager NavigationManager
+
+<PageTitle>My Job Applications</PageTitle>
+
+<h1>My Job Applications</h1>
+
+@if (isLoading)
+{
+    <p><em>Loading...</em></p>
+}
+else if (applications.Any())
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Job Title</th>
+                <th>Applied Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var application in applications)
+            {
+                <tr>
+                    <td>@application.Job.JobTitle</td>
+                    <td>@application.AppliedDate.ToString("yyyy-MM-dd")</td>
+                    <td>
+                        @if (application.Job.Deadline < DateTime.Now)
+                        {
+                            <span class="badge bg-warning">Job Expired</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-info">Pending</span>
+                        }
+                    </td>
+                    <td>
+                        <button class="btn btn-info" @onclick="() => ViewJobDetails(application.JobId)">View Job</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>You haven't applied to any jobs yet.</p>
+}
+
+<button class="btn btn-primary" @onclick="ViewAllJobs">Browse Jobs</button>
+
+@code {
+    private List<JobApplication> applications = new List<JobApplication>();
+    private bool isLoading = true;
+    private int currentUserId = 1; // This would normally come from authentication
+
+    protected override async Task OnInitializedAsync()
+    {
+        applications = await JobApplicationService.GetApplicationsByUserIdAsync(currentUserId);
+        isLoading = false;
+    }
+
+    private void ViewJobDetails(int jobId)
+    {
+        NavigationManager.NavigateTo($"/jobs/{jobId}");
+    }
+
+    private void ViewAllJobs()
+    {
+        NavigationManager.NavigateTo("/jobs");
+    }
+} 

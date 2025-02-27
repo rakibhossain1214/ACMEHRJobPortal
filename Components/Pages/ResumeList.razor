@@ -1,0 +1,112 @@
+@page "/resume/{userId:int}"
+@rendermode InteractiveServer
+@inject ResumeService ResumeService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Resume Management</PageTitle>
+
+<h1>Resume Management</h1>
+
+@if (isLoading)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="mb-4">
+        <h3>Upload New Resume</h3>
+        <InputFile OnChange="OnFileChange" class="form-control mb-2" />
+        <button class="btn btn-primary" @onclick="UploadFile" disabled="@(!fileSelected)">Upload</button>
+    </div>
+
+    @if (resumes.Any())
+    {
+        <h3>Your Resumes</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>File Name</th>
+                    <th>Uploaded Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var resume in resumes)
+                {
+                    <tr>
+                        <td>@GetFileName(resume.FilePath)</td>
+                        <td>@resume.UploadedDate.ToString("yyyy-MM-dd")</td>
+                        <td>
+                            <a href="@resume.FilePath" target="_blank" class="btn btn-info">View</a>
+                            <button class="btn btn-danger" @onclick="() => DeleteResume(resume.ResumeId)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>No resumes uploaded yet.</p>
+    }
+
+    <button class="btn btn-secondary" @onclick="BackToProfile">Back to Profile</button>
+}
+
+@code {
+    [Parameter]
+    public int UserId { get; set; }
+
+    private List<UploadResume> resumes = new List<UploadResume>();
+    private bool isLoading = true;
+    private IBrowserFile selectedFile;
+    private bool fileSelected = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadResumes();
+    }
+
+    private async Task LoadResumes()
+    {
+        resumes = await ResumeService.GetResumesByUserIdAsync(UserId);
+        isLoading = false;
+    }
+
+    private void OnFileChange(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+        fileSelected = true;
+    }
+
+    private async Task UploadFile()
+    {
+        if (selectedFile != null)
+        {
+            await ResumeService.UploadResumeAsync(selectedFile, UserId);
+            fileSelected = false;
+            await LoadResumes();
+        }
+    }
+
+    private async Task DeleteResume(int resumeId)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this resume?");
+        if (confirmed)
+        {
+            await ResumeService.DeleteResumeAsync(resumeId);
+            await LoadResumes();
+        }
+    }
+
+    private string GetFileName(string filePath)
+    {
+        return Path.GetFileName(filePath);
+    }
+
+    private void BackToProfile()
+    {
+        NavigationManager.NavigateTo($"/profile/{UserId}");
+    }
+} 
