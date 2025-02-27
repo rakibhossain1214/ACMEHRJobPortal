@@ -9,6 +9,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// Add HttpContextAccessor
+builder.Services.AddHttpContextAccessor();
+
 // Add DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
@@ -20,6 +23,7 @@ builder.Services.AddScoped<EducationService>();
 builder.Services.AddScoped<ResumeService>();
 builder.Services.AddScoped<JobService>();
 builder.Services.AddScoped<JobApplicationService>();
+builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();
 
@@ -47,7 +51,6 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseStaticFiles();
 app.UseAntiforgery();
 

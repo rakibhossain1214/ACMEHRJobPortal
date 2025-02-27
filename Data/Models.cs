@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Identity;
 
 namespace HRJobPortal.Data
 {
@@ -13,8 +14,15 @@ namespace HRJobPortal.Data
         [Required]
         public string Name { get; set; }
 
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
+
         public string? ContactInfo { get; set; } // Nullable
         public string? Address { get; set; } // Nullable
+
+        [Required]
+        public string PasswordHash { get; set; }
 
         public ICollection<Education> Educations { get; set; } = new List<Education>();
         public ICollection<UploadResume> UploadResumes { get; set; } = new List<UploadResume>();

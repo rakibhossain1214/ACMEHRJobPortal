@@ -3,6 +3,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace HRJobPortal.Data
 {
@@ -23,15 +25,19 @@ namespace HRJobPortal.Data
             var user1 = new User
             {
                 Name = "John Doe",
+                Email = "john.doe@example.com",
                 ContactInfo = "john.doe@example.com",
-                Address = "123 Main St, Anytown, USA"
+                Address = "123 Main St, Anytown, USA",
+                PasswordHash = HashPassword("password123") // Simple password for testing
             };
 
             var user2 = new User
             {
                 Name = "Jane Smith",
+                Email = "jane.smith@example.com",
                 ContactInfo = "jane.smith@example.com",
-                Address = "456 Oak Ave, Somewhere, USA"
+                Address = "456 Oak Ave, Somewhere, USA",
+                PasswordHash = HashPassword("password123") // Simple password for testing
             };
 
             context.Users.AddRange(user1, user2);
@@ -97,6 +103,15 @@ namespace HRJobPortal.Data
 
             context.JobApplications.Add(application1);
             await context.SaveChangesAsync();
+        }
+
+        private static string HashPassword(string password)
+        {
+            using (var sha256 = System.Security.Cryptography.SHA256.Create())
+            {
+                var hashedBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+                return Convert.ToBase64String(hashedBytes);
+            }
         }
     }
 } 

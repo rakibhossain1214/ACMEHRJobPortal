@@ -1,9 +1,18 @@
 @page "/my-applications"
 @rendermode InteractiveServer
 @inject JobApplicationService JobApplicationService
+@inject AuthService AuthService
 @inject NavigationManager NavigationManager
 
 <PageTitle>My Job Applications</PageTitle>
+
+@if (!AuthService.IsAuthenticated())
+{
+    <div class="alert alert-warning">
+        Please <a href="/login">login</a> to view your applications.
+    </div>
+    return;
+}
 
 <h1>My Job Applications</h1>
 
@@ -56,11 +65,14 @@ else
 @code {
     private List<JobApplication> applications = new List<JobApplication>();
     private bool isLoading = true;
-    private int currentUserId = 1; // This would normally come from authentication
 
     protected override async Task OnInitializedAsync()
     {
-        applications = await JobApplicationService.GetApplicationsByUserIdAsync(currentUserId);
+        if (AuthService.IsAuthenticated())
+        {
+            int currentUserId = AuthService.GetCurrentUserId();
+            applications = await JobApplicationService.GetApplicationsByUserIdAsync(currentUserId);
+        }
         isLoading = false;
     }
 

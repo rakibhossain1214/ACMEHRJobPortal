@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @inject JobService JobService
 @inject JobApplicationService JobApplicationService
+@inject AuthService AuthService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 
@@ -36,7 +37,16 @@ else if (job != null)
             
             @if (job.IsActive)
             {
-                <button class="btn btn-primary" @onclick="ApplyForJob">Apply Now</button>
+                @if (AuthService.IsAuthenticated())
+                {
+                    <button class="btn btn-primary" @onclick="ApplyForJob">Apply Now</button>
+                }
+                else
+                {
+                    <div class="alert alert-info">
+                        Please <a href="/login">login</a> to apply for this job.
+                    </div>
+                }
             }
             <button class="btn btn-secondary" @onclick="BackToJobs">Back to Jobs</button>
         </div>
@@ -54,7 +64,6 @@ else
 
     private Job job;
     private bool isLoading = true;
-    private int currentUserId = 1; // This would normally come from authentication
 
     protected override async Task OnInitializedAsync()
     {
@@ -64,6 +73,14 @@ else
 
     private async Task ApplyForJob()
     {
+        if (!AuthService.IsAuthenticated())
+        {
+            NavigationManager.NavigateTo("/login");
+            return;
+        }
+
+        int currentUserId = AuthService.GetCurrentUserId();
+
         // Check if user has already applied
         bool alreadyApplied = await JobApplicationService.HasUserAppliedToJobAsync(currentUserId, JobId);
         

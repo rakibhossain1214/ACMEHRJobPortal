@@ -2,9 +2,18 @@
 @page "/profile/{id:int}"
 @rendermode InteractiveServer
 @inject UserService UserService
+@inject AuthService AuthService
 @inject NavigationManager NavigationManager
 
 <PageTitle>User Profile</PageTitle>
+
+@if (!AuthService.IsAuthenticated())
+{
+    <div class="alert alert-warning">
+        Please <a href="/login">login</a> to view your profile.
+    </div>
+    return;
+}
 
 <h1>User Profile</h1>
 
@@ -25,6 +34,11 @@ else
         </div>
 
         <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <InputText id="email" @bind-Value="user.Email" class="form-control" readonly />
+        </div>
+
+        <div class="mb-3">
             <label for="contactInfo" class="form-label">Contact Info</label>
             <InputText id="contactInfo" @bind-Value="user.ContactInfo" class="form-control" />
         </div>
@@ -35,11 +49,17 @@ else
         </div>
 
         <button type="submit" class="btn btn-primary">Save</button>
-        @if (userId > 0)
-        {
-            <button type="button" class="btn btn-danger" @onclick="DeleteUser">Delete</button>
-        }
     </EditForm>
+
+    <div class="mt-4">
+        <h3>Education</h3>
+        <a href="/education/@userId" class="btn btn-primary">Manage Education</a>
+    </div>
+
+    <div class="mt-4">
+        <h3>Resume</h3>
+        <a href="/resume/@userId" class="btn btn-primary">Manage Resume</a>
+    </div>
 }
 
 @code {
@@ -55,6 +75,14 @@ else
         if (Id.HasValue && Id.Value > 0)
         {
             userId = Id.Value;
+        }
+        else if (AuthService.IsAuthenticated())
+        {
+            userId = AuthService.GetCurrentUserId();
+        }
+
+        if (userId > 0)
+        {
             user = await UserService.GetUserByIdAsync(userId) ?? new User();
         }
         isLoading = false;
@@ -72,14 +100,5 @@ else
             userId = newUser.UserId;
         }
         NavigationManager.NavigateTo($"/profile/{userId}");
-    }
-
-    private async Task DeleteUser()
-    {
-        if (userId > 0)
-        {
-            await UserService.DeleteUserAsync(userId);
-            NavigationManager.NavigateTo("/");
-        }
     }
 } 

@@ -1,0 +1,16 @@
+@page "/logout"
+@rendermode InteractiveServer
+@inject AuthService AuthService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Logout</PageTitle>
+
+<p>Logging out...</p>
+
+@code {
+    protected override void OnInitialized()
+    {
+        AuthService.Logout();
+        NavigationManager.NavigateTo("/");
+    }
+} 
