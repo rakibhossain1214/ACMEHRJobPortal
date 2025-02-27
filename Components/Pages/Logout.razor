@@ -2,15 +2,35 @@
 @rendermode InteractiveServer
 @inject AuthService AuthService
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Logout</PageTitle>
 
-<p>Logging out...</p>
+<div class="text-center">
+    <h3>Logging out...</h3>
+    <div class="spinner-border mt-3" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
 
 @code {
+    private bool _isFirstRender = true;
+
     protected override void OnInitialized()
     {
+        // Perform logout in OnInitialized (no JS interop here)
         AuthService.Logout();
-        NavigationManager.NavigateTo("/");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _isFirstRender = false;
+            // Short delay for visual feedback
+            await Task.Delay(500);
+            // Use JS interop to navigate after the component has rendered
+            await JSRuntime.InvokeVoidAsync("eval", "window.location.href = '/'");
+        }
     }
 } 
